@@ -1,0 +1,6 @@
+/vendor
+/public/storage
+/storage/*.key
+/database/*.sqlite
+.env
+.phpunit.result.cache
