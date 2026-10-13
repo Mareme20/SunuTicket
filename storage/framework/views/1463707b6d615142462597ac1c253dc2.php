@@ -48,7 +48,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <dt class="stat-label">Événements actifs</dt>
-            <dd class="stat-value"><?php echo e($totals['events']); ?></dd>
+            <dd class="stat-value"><?php echo e($totals['upcoming']); ?></dd>
         </div>
         <div class="stat-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -59,7 +59,71 @@
             </svg>
         </div>
     </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <dt class="stat-label">Entrées scannées</dt>
+            <dd class="stat-value"><?php echo e(number_format($totals['entered'], 0, ',', ' ')); ?></dd>
+        </div>
+        <div class="stat-icon" style="background:var(--green-bg);color:#065f46;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+    </div>
 </dl>
+
+<?php if($nextEvent || $attentionEvents->isNotEmpty()): ?>
+    <div class="ops-grid organizer-ops-grid">
+        <?php if($nextEvent): ?>
+            <?php
+                $nextPct = $nextEvent->capacity ? min(100, round($nextEvent->tickets_count / $nextEvent->capacity * 100)) : 0;
+            ?>
+            <section class="ops-panel">
+                <div class="ops-panel-head">
+                    <h2>Prochain événement</h2>
+                    <span class="badge-pill paid"><?php echo e($nextEvent->starts_at->diffForHumans()); ?></span>
+                </div>
+                <div class="organizer-focus">
+                    <strong><?php echo e($nextEvent->title); ?></strong>
+                    <span><?php echo e($nextEvent->starts_at->translatedFormat('j F Y \à H\hi')); ?> · <?php echo e($nextEvent->city); ?></span>
+                    <div class="progress-bar-wrap" title="<?php echo e($nextPct); ?>% des places vendues">
+                        <div class="progress-bar-fill" style="width: <?php echo e($nextPct); ?>%;"></div>
+                    </div>
+                    <span><?php echo e($nextEvent->tickets_count); ?> / <?php echo e($nextEvent->capacity); ?> billets vendus</span>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                        <a class="btn btn-primary btn-sm" href="<?php echo e(route('organizer.scan', $nextEvent)); ?>">Scanner</a>
+                        <a class="btn btn-ghost btn-sm" href="<?php echo e(route('organizer.events.show', $nextEvent)); ?>">Voir les ventes</a>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <section class="ops-panel <?php echo e($attentionEvents->isNotEmpty() ? 'ops-panel-warnings' : ''); ?>">
+            <div class="ops-panel-head">
+                <h2>À surveiller</h2>
+                <span class="badge-pill <?php echo e($attentionEvents->isEmpty() ? 'paid' : 'pending'); ?>"><?php echo e($attentionEvents->count()); ?></span>
+            </div>
+            <?php $__empty_1 = true; $__currentLoopData = $attentionEvents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $event): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <?php
+                    $soldRate = $event->capacity ? round($event->tickets_count / $event->capacity * 100) : 0;
+                    $reason = ! $event->is_published
+                        ? 'Non publié'
+                        : ($soldRate >= 80 ? 'Presque complet' : 'Date proche');
+                ?>
+                <div class="ops-row">
+                    <div>
+                        <strong><?php echo e($event->title); ?></strong>
+                        <span><?php echo e($reason); ?> · <?php echo e($event->starts_at->translatedFormat('j M H\hi')); ?></span>
+                    </div>
+                    <time><?php echo e($soldRate); ?>%</time>
+                </div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <p class="ops-empty">Aucune alerte sur vos prochains événements.</p>
+            <?php endif; ?>
+        </section>
+    </div>
+<?php endif; ?>
 
 <div class="section-header" style="margin-top:40px;">
     <div>
@@ -113,6 +177,9 @@
 
                     <div class="org-event-stats">
                         <strong style="color:var(--teal-700);"><?php echo e($event->tickets_count); ?> / <?php echo e($event->capacity); ?></strong> billets vendus (<?php echo e($pct); ?>%)
+                        <span>·</span>
+                        <span style="color:var(--text-muted);">Entrées :</span>
+                        <strong><?php echo e($event->used_tickets_count); ?></strong>
                         <span>·</span>
                         <span style="color:var(--text-muted);">Recettes :</span>
                         <strong><?php echo e(fcfa((int) $event->revenue)); ?></strong>

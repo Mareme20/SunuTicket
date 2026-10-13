@@ -15,7 +15,10 @@
     <div class="detail-main">
         <?php if($event->posterUrl()): ?>
             <div class="detail-poster-wrap">
-                <img class="detail-poster" src="<?php echo e($event->posterUrl()); ?>" alt="Affiche : <?php echo e($event->title); ?>">
+                <button class="poster-zoom-trigger" type="button" data-poster-open aria-label="Afficher l’affiche en grand">
+                    <img class="detail-poster" src="<?php echo e($event->posterUrl()); ?>" alt="Affiche : <?php echo e($event->title); ?>">
+                    <span class="poster-zoom-hint">Voir l’affiche</span>
+                </button>
             </div>
         <?php else: ?>
             <div class="detail-poster-wrap" style="aspect-ratio: 16/9; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--navy-900), var(--teal-800)); color:#fff;">
@@ -310,6 +313,19 @@ unset($__errorArgs, $__bag); ?>
     </aside>
 </article>
 
+<?php if($event->posterUrl()): ?>
+    <div class="poster-lightbox" data-poster-lightbox aria-hidden="true">
+        <button class="poster-lightbox-close" type="button" data-poster-close aria-label="Fermer l’affiche">
+            &times;
+        </button>
+        <button class="poster-lightbox-backdrop" type="button" data-poster-close aria-label="Fermer l’affiche"></button>
+        <figure class="poster-lightbox-frame">
+            <img src="<?php echo e($event->posterUrl()); ?>" alt="Affiche : <?php echo e($event->title); ?>">
+            <figcaption><?php echo e($event->title); ?></figcaption>
+        </figure>
+    </div>
+<?php endif; ?>
+
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('scripts'); ?>
@@ -348,5 +364,41 @@ unset($__errorArgs, $__bag); ?>
     update();
 })();
 </script>
+<?php if($event->posterUrl()): ?>
+<script>
+(function () {
+    var lightbox = document.querySelector('[data-poster-lightbox]');
+    var openButton = document.querySelector('[data-poster-open]');
+    var closeButtons = document.querySelectorAll('[data-poster-close]');
+
+    if (!lightbox || !openButton) return;
+
+    function openPoster() {
+        lightbox.classList.add('is-open');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('poster-lightbox-open');
+    }
+
+    function closePoster() {
+        lightbox.classList.remove('is-open');
+        lightbox.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('poster-lightbox-open');
+        openButton.focus();
+    }
+
+    openButton.addEventListener('click', openPoster);
+    closeButtons.forEach(function (button) {
+        button.addEventListener('click', closePoster);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && lightbox.classList.contains('is-open')) {
+            closePoster();
+        }
+    });
+})();
+</script>
+<?php endif; ?>
 <?php $__env->stopPush(); ?>
+
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /home/user/Téléchargements/sunuticket/resources/views/events/show.blade.php ENDPATH**/ ?>

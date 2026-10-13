@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -39,6 +40,21 @@ class Order extends Model
 
     public function statusLabel(): string
     {
-        return ['pending' => 'En attente', 'paid' => 'Payé', 'failed' => 'Échoué'][$this->status] ?? $this->status;
+        return [
+            'pending' => 'En attente',
+            'paid' => 'Payé',
+            'failed' => 'Échoué',
+            'expired' => 'Expiré',
+        ][$this->status] ?? $this->status;
+    }
+
+    public function expiresAt(): Carbon
+    {
+        return $this->created_at->copy()->addMinutes(config('sunuticket.hold_minutes'));
+    }
+
+    public function isStalePending(): bool
+    {
+        return $this->status === 'pending' && $this->expiresAt()->isPast();
     }
 }

@@ -8,12 +8,13 @@ use App\Models\Ticket;
 use App\Services\TicketQr;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ScannerController extends Controller
 {
     public function page(Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('scan', $event);
 
         return view('organizer.scan', compact('event'));
     }
@@ -21,7 +22,7 @@ class ScannerController extends Controller
     /** Retourne la liste des billets valides pour un scan hors ligne local. */
     public function data(Event $event): JsonResponse
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('scan', $event);
 
         $tickets = $event->tickets()
             ->where('status', 'valid')
@@ -44,7 +45,7 @@ class ScannerController extends Controller
     /** Vérifie un billet. La validation est atomique : un même billet ne peut être accepté qu'une seule fois. */
     public function check(Request $request, Event $event): JsonResponse
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('scan', $event);
 
         $input = trim((string) $request->input('payload', ''));
 
@@ -85,10 +86,4 @@ class ScannerController extends Controller
         return response()->json(compact('ok', 'title', 'detail'));
     }
 
-    private function authorizeEvent(Event $event): void
-    {
-        $user = auth()->user();
-
-        abort_unless($user && ($event->user_id === $user->id || $user->isAdmin() || $user->canAccessEvent($event)), 403);
-    }
 }

@@ -30,16 +30,31 @@
             </button>
         </form>
 
+        <?php if($cities->isNotEmpty()): ?>
+            <form method="get" action="<?php echo e(route('home')); ?>" style="display:flex;align-items:center;gap:10px;margin-top:12px;max-width:520px;flex-wrap:wrap;">
+                <?php if($search !== ''): ?><input type="hidden" name="q" value="<?php echo e($search); ?>"><?php endif; ?>
+                <?php if($category !== ''): ?><input type="hidden" name="category" value="<?php echo e($category); ?>"><?php endif; ?>
+                <?php if($dateFilter !== ''): ?><input type="hidden" name="date" value="<?php echo e($dateFilter); ?>"><?php endif; ?>
+                <select class="form-control" name="city" aria-label="Filtrer par ville" style="flex:1;min-width:190px;background:rgba(255,255,255,0.96);">
+                    <option value="">Toutes les villes</option>
+                    <?php $__currentLoopData = $cities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $availableCity): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($availableCity); ?>" <?php if($city === $availableCity): echo 'selected'; endif; ?>><?php echo e($availableCity); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
+                <button class="btn btn-ghost" type="submit" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.28);">Filtrer</button>
+            </form>
+        <?php endif; ?>
+
         <!-- Filtres rapides -->
         <div style="display:flex;align-items:center;gap:8px;margin-top:18px;flex-wrap:wrap;font-size:0.88rem;">
             <span style="color:rgba(255,255,255,0.7);font-weight:500;">Explorer :</span>
-            <a class="tag-chip" href="<?php echo e(route('home')); ?>" style="<?php echo e(!$category && !$dateFilter ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Tout voir</a>
-            <a class="tag-chip" href="<?php echo e(route('home', ['category' => 'concert'])); ?>" style="<?php echo e($category === 'concert' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">🎵 Concert</a>
-            <a class="tag-chip" href="<?php echo e(route('home', ['category' => 'festival'])); ?>" style="<?php echo e($category === 'festival' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">🎉 Festival</a>
-            <a class="tag-chip" href="<?php echo e(route('home', ['date' => 'today'])); ?>" style="<?php echo e($dateFilter === 'today' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Aujourd’hui</a>
-            <a class="tag-chip" href="<?php echo e(route('home', ['date' => 'weekend'])); ?>" style="<?php echo e($dateFilter === 'weekend' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Ce week-end</a>
-            <a class="tag-chip" href="<?php echo e(route('home', ['date' => 'soon'])); ?>" style="<?php echo e($dateFilter === 'soon' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Bientôt</a>
-            <?php if($search || $category || $dateFilter): ?>
+            <a class="tag-chip" href="<?php echo e(route('home')); ?>" style="<?php echo e(!$search && !$category && !$dateFilter && !$city ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Tout voir</a>
+            <a class="tag-chip" href="<?php echo e(route('home', array_filter(['category' => 'concert', 'city' => $city ?: null]))); ?>" style="<?php echo e($category === 'concert' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">🎵 Concert</a>
+            <a class="tag-chip" href="<?php echo e(route('home', array_filter(['category' => 'festival', 'city' => $city ?: null]))); ?>" style="<?php echo e($category === 'festival' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">🎉 Festival</a>
+            <a class="tag-chip" href="<?php echo e(route('home', array_filter(['date' => 'today', 'city' => $city ?: null]))); ?>" style="<?php echo e($dateFilter === 'today' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Aujourd’hui</a>
+            <a class="tag-chip" href="<?php echo e(route('home', array_filter(['date' => 'weekend', 'city' => $city ?: null]))); ?>" style="<?php echo e($dateFilter === 'weekend' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Ce week-end</a>
+            <a class="tag-chip" href="<?php echo e(route('home', array_filter(['date' => 'soon', 'city' => $city ?: null]))); ?>" style="<?php echo e($dateFilter === 'soon' ? 'background:rgba(255,255,255,0.3);font-weight:700;' : ''); ?>">Bientôt</a>
+            <?php if($search || $category || $dateFilter || $city): ?>
                 <a class="tag-chip" href="<?php echo e(route('home')); ?>" style="background:rgba(239,68,68,0.3);border-color:rgba(239,68,68,0.5);">✕ Réinitialiser</a>
             <?php endif; ?>
         </div>
@@ -98,7 +113,22 @@
     <?php else: ?>
         <div class="grid">
             <?php $__currentLoopData = $events; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $event): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <?php $full = $event->soldCount() >= $event->capacity; ?>
+                <?php
+                    $full = $event->soldCount() >= $event->capacity;
+                    $statusClass = 'status-available';
+                    $statusLabel = 'Places dispo';
+
+                    if ($full) {
+                        $statusClass = 'status-full';
+                        $statusLabel = 'Complet';
+                    } elseif ((int) $event->price === 0) {
+                        $statusClass = 'status-free';
+                        $statusLabel = 'Gratuit';
+                    } elseif ($event->starts_at->lte(now()->addDays(3))) {
+                        $statusClass = 'status-soon';
+                        $statusLabel = 'Bientôt';
+                    }
+                ?>
                 <div class="event-card">
                     <a href="<?php echo e(route('events.show', $event)); ?>" style="text-decoration:none;color:inherit;display:block;">
                         <div class="event-media">
@@ -118,11 +148,7 @@
                             </div>
 
                             <!-- Statut -->
-                            <?php if($full): ?>
-                                <span class="event-status-pill status-full">Complet</span>
-                            <?php else: ?>
-                                <span class="event-status-pill status-available">Places dispo</span>
-                            <?php endif; ?>
+                            <span class="event-status-pill <?php echo e($statusClass); ?>"><?php echo e($statusLabel); ?></span>
                         </div>
                     </a>
 
@@ -198,4 +224,5 @@
 </section>
 
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /home/user/Téléchargements/sunuticket/resources/views/events/index.blade.php ENDPATH**/ ?>

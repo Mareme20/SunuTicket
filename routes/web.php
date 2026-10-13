@@ -21,7 +21,8 @@ Route::post('/evenements/{event}/acheter', [CheckoutController::class, 'store'])
 Route::get('/paiement/{order:reference}/retour', [CheckoutController::class, 'result'])->name('checkout.return');
 Route::post('/paydunya/ipn', [CheckoutController::class, 'ipn'])->name('paydunya.ipn');
 Route::get('/billets/rechercher', [TicketController::class, 'lookup'])->name('tickets.lookup');
-Route::post('/billets/rechercher', [TicketController::class, 'searchByPhone'])->name('tickets.search');
+Route::post('/billets/rechercher', [TicketController::class, 'searchByPhone'])
+    ->middleware('throttle:8,1')->name('tickets.search');
 Route::get('/billets/{order:reference}', [TicketController::class, 'show'])->name('tickets.show');
 Route::get('/billets/{order:reference}/pdf', [TicketController::class, 'pdf'])->name('tickets.pdf');
 Route::get('/billets/{order:reference}/calendar.ics', [TicketController::class, 'calendar'])->name('tickets.calendar');
@@ -54,4 +55,6 @@ Route::middleware(['auth', 'role:organizer,admin'])->prefix('organisateur')->nam
 // --- Administrateur ---
 Route::middleware(['auth', 'role:admin'])->prefix('administration')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::post('/paiements/expirer', [AdminController::class, 'expirePending'])
+        ->middleware('throttle:6,1')->name('payments.expire');
 });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Organizer;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
@@ -36,7 +37,7 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('viewOrganizer', $event);
 
         $orders = $event->orders()
             ->where('status', 'paid')
@@ -56,14 +57,14 @@ class EventController extends Controller
 
     public function edit(Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('update', $event);
 
         return view('organizer.events.form', compact('event'));
     }
 
     public function update(Request $request, Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('update', $event);
 
         $data = $request->validate($this->rules(creating: false, sold: $event->soldCount()));
 
@@ -86,7 +87,7 @@ class EventController extends Controller
 
     public function exportCsv(Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('viewOrganizer', $event);
 
         $orders = $event->orders()->where('status', 'paid')->latest('paid_at')->get();
 
@@ -112,13 +113,6 @@ class EventController extends Controller
         return response($content, 200)
             ->header('Content-Type', 'text/csv; charset=UTF-8')
             ->header('Content-Disposition', 'attachment; filename="participants-'.strtolower(str_replace(' ', '-', $event->title)).'.csv"');
-    }
-
-    private function authorizeEvent(Event $event): void
-    {
-        $user = auth()->user();
-
-        abort_unless($user && ($event->user_id === $user->id || $user->isAdmin() || $user->canAccessEvent($event)), 403);
     }
 
     private function normalizeTicketTypes(mixed $ticketTypes): array

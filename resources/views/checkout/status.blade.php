@@ -20,6 +20,9 @@
         <p style="color:var(--text-muted);font-size:1rem;line-height:1.6;margin-bottom:20px;">
             Nous attendons la confirmation de l'opérateur (Wave / Orange Money) pour « <strong>{{ $order->event->title }}</strong> ».
         </p>
+        <p style="color:var(--text-muted);font-size:0.92rem;margin-bottom:14px;">
+            Vos places sont réservées jusqu'à <strong>{{ $order->expiresAt()->translatedFormat('H\hi') }}</strong>.
+        </p>
         <p style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;font-size:0.88rem;color:var(--text-main);margin-bottom:24px;">
             💡 Dès validation, vos billets seront immédiatement envoyés par email à <strong>{{ $order->buyer_email }}</strong> et s'afficheront sur cette page.
         </p>
@@ -30,6 +33,22 @@
                 <polyline points="23 4 23 10 17 10"></polyline>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
+        </a>
+    @elseif($order->status === 'expired')
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--gold-50);color:var(--gold-600);display:grid;place-items:center;margin:0 auto 20px;border:2px solid var(--gold-400);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+
+        <h1 style="font-size:1.75rem;color:var(--navy-950);margin-bottom:12px;">Réservation expirée</h1>
+        <p style="color:var(--text-muted);font-size:1rem;line-height:1.6;margin-bottom:24px;">
+            Le paiement n’a pas été confirmé à temps. Les places ont été libérées pour les autres acheteurs.
+        </p>
+
+        <a class="btn btn-navy btn-block" href="{{ route('events.show', $order->event) }}">
+            <span>Recommencer l'achat</span>
         </a>
     @else
         <div style="width:64px;height:64px;border-radius:50%;background:var(--red-bg);color:var(--red);display:grid;place-items:center;margin:0 auto 20px;border:2px solid #fca5a5;">

@@ -85,7 +85,7 @@ class OrderFulfillment
 
         if ($newlyPaid) {
             try {
-                Mail::to($order->buyer_email)->send(new TicketsMail($order));
+                Mail::to($order->buyer_email)->queue(new TicketsMail($order));
             } catch (\Throwable $e) {
                 // Le paiement est bon : on ne bloque pas l'acheteur si l'email échoue (il a la page de billets).
                 report($e);

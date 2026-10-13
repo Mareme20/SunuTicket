@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Services\TicketPdf;
 use App\Support\Phone;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class TicketController extends Controller
@@ -26,18 +27,32 @@ class TicketController extends Controller
 
     public function searchByPhone(Request $request)
     {
-        $phone = Phone::normalize($request->input('phone', ''));
+        $lookup = trim((string) $request->input('lookup', $request->input('phone', '')));
+        $phone = Phone::normalize($lookup);
+        $email = Str::lower($lookup);
         $orders = [];
+        $lookupLabel = $lookup;
 
         if ($phone !== '' && preg_match(Phone::RULE, $phone)) {
+            $lookupLabel = Phone::pretty($phone);
             $orders = Order::where('buyer_phone', $phone)
                 ->where('status', 'paid')
                 ->with('event', 'tickets')
                 ->latest('paid_at')
                 ->get();
+        } elseif (Validator::make(['email' => $email], ['email' => ['required', 'email']])->passes()) {
+            $orders = Order::whereRaw('lower(buyer_email) = ?', [$email])
+                ->where('status', 'paid')
+                ->with('event', 'tickets')
+                ->latest('paid_at')
+                ->get();
+        } else {
+            return back()->withInput()->withErrors([
+                'lookup' => 'Saisissez un numéro sénégalais valide ou l’email utilisé lors de l’achat.',
+            ]);
         }
 
-        return view('tickets.lookup', compact('orders', 'phone'));
+        return view('tickets.lookup', compact('orders', 'phone', 'email', 'lookupLabel'));
     }
 
     public function calendar(Order $order)

@@ -50,7 +50,7 @@
     <div class="stat-card">
         <div class="stat-info">
             <dt class="stat-label">Événements actifs</dt>
-            <dd class="stat-value">{{ $totals['events'] }}</dd>
+            <dd class="stat-value">{{ $totals['upcoming'] }}</dd>
         </div>
         <div class="stat-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -61,7 +61,71 @@
             </svg>
         </div>
     </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <dt class="stat-label">Entrées scannées</dt>
+            <dd class="stat-value">{{ number_format($totals['entered'], 0, ',', ' ') }}</dd>
+        </div>
+        <div class="stat-icon" style="background:var(--green-bg);color:#065f46;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+    </div>
 </dl>
+
+@if($nextEvent || $attentionEvents->isNotEmpty())
+    <div class="ops-grid organizer-ops-grid">
+        @if($nextEvent)
+            @php
+                $nextPct = $nextEvent->capacity ? min(100, round($nextEvent->tickets_count / $nextEvent->capacity * 100)) : 0;
+            @endphp
+            <section class="ops-panel">
+                <div class="ops-panel-head">
+                    <h2>Prochain événement</h2>
+                    <span class="badge-pill paid">{{ $nextEvent->starts_at->diffForHumans() }}</span>
+                </div>
+                <div class="organizer-focus">
+                    <strong>{{ $nextEvent->title }}</strong>
+                    <span>{{ $nextEvent->starts_at->translatedFormat('j F Y \à H\hi') }} · {{ $nextEvent->city }}</span>
+                    <div class="progress-bar-wrap" title="{{ $nextPct }}% des places vendues">
+                        <div class="progress-bar-fill" style="width: {{ $nextPct }}%;"></div>
+                    </div>
+                    <span>{{ $nextEvent->tickets_count }} / {{ $nextEvent->capacity }} billets vendus</span>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                        <a class="btn btn-primary btn-sm" href="{{ route('organizer.scan', $nextEvent) }}">Scanner</a>
+                        <a class="btn btn-ghost btn-sm" href="{{ route('organizer.events.show', $nextEvent) }}">Voir les ventes</a>
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        <section class="ops-panel {{ $attentionEvents->isNotEmpty() ? 'ops-panel-warnings' : '' }}">
+            <div class="ops-panel-head">
+                <h2>À surveiller</h2>
+                <span class="badge-pill {{ $attentionEvents->isEmpty() ? 'paid' : 'pending' }}">{{ $attentionEvents->count() }}</span>
+            </div>
+            @forelse($attentionEvents as $event)
+                @php
+                    $soldRate = $event->capacity ? round($event->tickets_count / $event->capacity * 100) : 0;
+                    $reason = ! $event->is_published
+                        ? 'Non publié'
+                        : ($soldRate >= 80 ? 'Presque complet' : 'Date proche');
+                @endphp
+                <div class="ops-row">
+                    <div>
+                        <strong>{{ $event->title }}</strong>
+                        <span>{{ $reason }} · {{ $event->starts_at->translatedFormat('j M H\hi') }}</span>
+                    </div>
+                    <time>{{ $soldRate }}%</time>
+                </div>
+            @empty
+                <p class="ops-empty">Aucune alerte sur vos prochains événements.</p>
+            @endforelse
+        </section>
+    </div>
+@endif
 
 <div class="section-header" style="margin-top:40px;">
     <div>
@@ -114,6 +178,9 @@
 
                     <div class="org-event-stats">
                         <strong style="color:var(--teal-700);">{{ $event->tickets_count }} / {{ $event->capacity }}</strong> billets vendus ({{ $pct }}%)
+                        <span>·</span>
+                        <span style="color:var(--text-muted);">Entrées :</span>
+                        <strong>{{ $event->used_tickets_count }}</strong>
                         <span>·</span>
                         <span style="color:var(--text-muted);">Recettes :</span>
                         <strong>{{ fcfa((int) $event->revenue) }}</strong>

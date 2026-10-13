@@ -12,6 +12,17 @@ class PublicEventController extends Controller
         $search = trim((string) $request->query('q', ''));
         $category = trim((string) $request->query('category', ''));
         $dateFilter = trim((string) $request->query('date', ''));
+        $city = trim((string) $request->query('city', ''));
+        $weekendStart = now()->next('Saturday')->startOfDay();
+        $weekendEnd = $weekendStart->copy()->next('Sunday')->endOfDay();
+
+        if (now()->isSaturday()) {
+            $weekendStart = now()->startOfDay();
+            $weekendEnd = now()->next('Sunday')->endOfDay();
+        } elseif (now()->isSunday()) {
+            $weekendStart = now()->startOfDay();
+            $weekendEnd = now()->endOfDay();
+        }
 
         $events = Event::onSale()
             ->withCount('tickets')
@@ -23,14 +34,22 @@ class PublicEventController extends Controller
                 });
             })
             ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($city !== '', fn ($query) => $query->where('city', $city))
             ->when($dateFilter === 'today', fn ($query) => $query->whereDate('starts_at', today()))
-            ->when($dateFilter === 'weekend', fn ($query) => $query->whereBetween('starts_at', [now()->startOfWeek(), now()->endOfWeek()]))
+            ->when($dateFilter === 'weekend', fn ($query) => $query->whereBetween('starts_at', [$weekendStart, $weekendEnd]))
             ->when($dateFilter === 'soon', fn ($query) => $query->where('starts_at', '<=', now()->addDays(14)))
             ->orderBy('starts_at')
             ->simplePaginate(12)
             ->withQueryString();
 
-        return view('events.index', compact('events', 'search', 'category', 'dateFilter'));
+        $cities = Event::onSale()
+            ->select('city')
+            ->whereNotNull('city')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city');
+
+        return view('events.index', compact('events', 'search', 'category', 'dateFilter', 'city', 'cities'));
     }
 
     public function show(Event $event)

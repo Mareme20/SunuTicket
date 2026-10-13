@@ -28,11 +28,11 @@ class User extends Authenticatable
 
     public function isGateStaff(): bool
     {
-        return in_array($this->role, ['controller', 'gate', 'staff', 'checkin', 'organizer'], true);
+        return in_array($this->role, ['controller', 'gate', 'staff', 'checkin'], true);
     }
 
     public function canAccessEvent(Event $event): bool
     {
-        return $this->id === $event->user_id || $this->isAdmin() || $this->isGateStaff();
+        return $this->id === $event->user_id || $this->isAdmin();
     }
 }

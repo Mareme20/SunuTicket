@@ -79,6 +79,16 @@ class PayDunya
     {
         $response = $this->http()->get($this->baseUrl().'/checkout-invoice/confirm/'.$token);
 
-        return $response->json() ?? [];
+        $data = $response->json() ?? [];
+
+        if (! $response->successful()) {
+            Log::warning('PayDunya: confirmation de facture indisponible', [
+                'status' => $response->status(),
+                'token' => $token,
+                'body' => $data,
+            ]);
+        }
+
+        return $data;
     }
 }

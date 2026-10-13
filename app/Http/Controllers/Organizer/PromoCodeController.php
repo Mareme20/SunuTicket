@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\PromoCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 
 class PromoCodeController extends Controller
 {
     public function store(Request $request, Event $event)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('managePromoCodes', $event);
 
         $data = $request->validate([
             'code' => ['required', 'string', 'max:80', 'regex:/^[A-Za-z0-9-]+$/'],
@@ -55,7 +56,7 @@ class PromoCodeController extends Controller
 
     public function destroy(Event $event, PromoCode $promoCode)
     {
-        $this->authorizeEvent($event);
+        Gate::authorize('managePromoCodes', $event);
 
         abort_unless($promoCode->event_id === $event->id, 404);
 
@@ -64,10 +65,4 @@ class PromoCodeController extends Controller
         return Redirect::route('organizer.events.show', $event)->with('status', 'Code promo supprimé.');
     }
 
-    private function authorizeEvent(Event $event): void
-    {
-        $user = auth()->user();
-
-        abort_unless($user && ($event->user_id === $user->id || $user->isAdmin() || $user->canAccessEvent($event)), 403);
-    }
 }

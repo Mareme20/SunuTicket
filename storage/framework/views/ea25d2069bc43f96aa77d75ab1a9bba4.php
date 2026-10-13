@@ -122,15 +122,26 @@
 <footer class="foot">
     <div class="foot-top">
         <div class="foot-brand">
-            <h4>
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--teal-400);"></span>
-                SunuTicket Sénégal
-            </h4>
+            <a class="foot-logo" href="<?php echo e(route('home')); ?>" aria-label="Accueil SunuTicket">
+                <span class="foot-logo-mark">
+                    <img src="<?php echo e(asset('images/logo-sunuticket.png')); ?>" alt="Logo SunuTicket">
+                </span>
+                <span class="foot-logo-text">SunuTicket Sénégal</span>
+            </a>
             <p>La billetterie digitale simple et conviviale pour vivre la culture, les concerts et les soirées au Sénégal. Fini la queue au guichet !</p>
             <div class="payment-badges-row">
-                <span class="badge-pay" style="background:#00a4e4;border-color:#00a4e4;">Wave</span>
-                <span class="badge-pay" style="background:#ff6600;border-color:#ff6600;">Orange Money</span>
-                <span class="badge-pay">PayDunya</span>
+                <span class="payment-logo payment-logo-wave" aria-label="Wave">
+                    <span class="payment-logo-mark">W</span>
+                    <span>Wave</span>
+                </span>
+                <span class="payment-logo payment-logo-orange" aria-label="Orange Money">
+                    <span class="payment-logo-mark">OM</span>
+                    <span>Orange Money</span>
+                </span>
+                <span class="payment-logo payment-logo-paydunya" aria-label="PayDunya">
+                    <span class="payment-logo-mark">P</span>
+                    <span>PayDunya</span>
+                </span>
             </div>
         </div>
 
@@ -167,4 +178,5 @@
 
 <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
-</html><?php /**PATH /home/user/Téléchargements/sunuticket/resources/views/layouts/app.blade.php ENDPATH**/ ?>
+</html>
+<?php /**PATH /home/user/Téléchargements/sunuticket/resources/views/layouts/app.blade.php ENDPATH**/ ?>

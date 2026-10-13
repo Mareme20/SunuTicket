@@ -7,14 +7,15 @@
 <section class="panel" style="max-width:760px;margin:0 auto 40px;">
     <div style="border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:24px;">
         <h1 style="font-size:1.9rem;color:var(--navy-950);margin:0;">Retrouver mes billets</h1>
-        <p style="color:var(--text-muted);margin:8px 0 0;">Saisissez votre numéro de téléphone pour retrouver tous vos billets achetés.</p>
+        <p style="color:var(--text-muted);margin:8px 0 0;">Saisissez le numéro de téléphone ou l’email utilisé lors de l’achat.</p>
     </div>
 
     <form method="post" action="{{ route('tickets.search') }}" class="checkout-form">
         @csrf
         <div class="form-group">
-            <label for="phone">Numéro de téléphone</label>
-            <input id="phone" class="form-control" name="phone" value="{{ old('phone', $phone ?? '') }}" type="tel" inputmode="tel" placeholder="Ex : 77 123 45 67" required>
+            <label for="lookup">Téléphone ou email</label>
+            <input id="lookup" class="form-control" name="lookup" value="{{ old('lookup', $lookupLabel ?? $phone ?? '') }}" type="text" inputmode="email" placeholder="Ex : 77 123 45 67 ou fatou@gmail.com" required>
+            @error('lookup')<p class="err">{{ $message }}</p>@enderror
         </div>
 
         <button class="btn btn-primary btn-lg" type="submit">Chercher mes billets</button>
@@ -22,7 +23,7 @@
 
     @if(isset($orders) && $orders !== [])
         <div style="margin-top:28px;">
-            <h2 style="font-size:1.2rem;color:var(--navy-950);margin-bottom:12px;">Billets trouvés pour {{ \App\Support\Phone::pretty($phone) }}</h2>
+            <h2 style="font-size:1.2rem;color:var(--navy-950);margin-bottom:12px;">Billets trouvés pour {{ $lookupLabel }}</h2>
 
             <div class="list-stack">
                 @foreach($orders as $order)
@@ -44,7 +45,7 @@
     @elseif(isset($orders))
         <div class="empty-state" style="margin-top:24px;">
             <h3>Aucun billet trouvé</h3>
-            <p>Nous n’avons pas trouvé de commande validée pour ce numéro. Vérifiez le numéro ou contactez le support.</p>
+            <p>Nous n’avons pas trouvé de commande validée pour cette recherche. Vérifiez le téléphone ou l’email, puis réessayez.</p>
         </div>
     @endif
 </section>
